@@ -48,11 +48,48 @@ class MyAppState extends ChangeNotifier {
 
 class MyHomePage extends StatelessWidget {
   const MyHomePage({super.key});
-
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      body: Row(
+        children: [
+          SafeArea(
+            child: NavigationRail(
+              extended: false,
+              destinations: [
+                NavigationRailDestination(
+                    icon: Icon(Icons.home),
+                    label: const Text('Home')
+                ),
+                NavigationRailDestination(
+                    icon: Icon(Icons.favorite),
+                    label: const Text('Favorites')
+                )
+              ],
+              selectedIndex: 0,
+              onDestinationSelected: (value) {
+                print('Selected: $value');
+              },
+            )
+          ),
+          Expanded(
+              child: Container(
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                child: GeneratePage(),
+              )
+          )
+        ],
+      )
+    );
+  }
+}
+
+class GeneratePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context){
     var appState = context.watch<MyAppState>();
     var pair = appState.current;
+
     IconData icon;
     if(appState.favorites.contains(pair)){
       icon = Icons.favorite;
@@ -60,34 +97,31 @@ class MyHomePage extends StatelessWidget {
       icon = Icons.favorite_border;
     }
 
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            BigCard(pair: pair),
-            const SizedBox(height: 10,),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ElevatedButton.icon(
-                    onPressed: () {
-                      appState.toggleFavorite();
-                    },
-                    icon: Icon(icon),
-                    label: Text('Like')
-                ),
-
-                ElevatedButton(
-                    onPressed: (){
-                      appState.getNext();
-                    },
-                    child: Text('Next')
-                )
-              ],
-            ),
-          ],
-        ),
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          BigCard(pair: pair),
+          SizedBox(height: 10),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  appState.toggleFavorite();
+                },
+                icon: Icon(icon),
+                label: const Text('Like'),
+              ),
+              ElevatedButton(
+                  onPressed: () {
+                    appState.getNext();
+                  },
+                  child: Text('Next'),
+              )
+            ],
+          )
+        ],
       ),
     );
   }
