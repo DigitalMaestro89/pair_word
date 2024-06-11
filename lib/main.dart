@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:english_words/english_words.dart';
 
@@ -28,13 +29,18 @@ class MyApp extends StatelessWidget {
 
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
-//   Add notifylistener
+  var favorites = <WordPair>[];
+  var selectedIndex = 0;
+  var selectedIndexInAnotherWidget = 0;
+  var indexInYetAnotherWidget = 42;
+  var optionASelected = false;
+  var optionBSelected = false;
+  var loadingFromNetwork = false;
+
   void getNext(){
     current = WordPair.random();
     notifyListeners();
   }
-
-  var favorites = <WordPair>[];
 
   void toggleFavorite(){
     if(favorites.contains(current)){
@@ -46,45 +52,104 @@ class MyAppState extends ChangeNotifier {
   }
 }
 
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key});
+// class MyHomePage extends StatelessWidget {
+//   const MyHomePage({super.key});
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       body: Row(
+//         children: [
+//           SafeArea(
+//             child: NavigationRail(
+//               extended: false,
+//               destinations: [
+//                 NavigationRailDestination(
+//                     icon: Icon(Icons.home),
+//                     label: const Text('Home')
+//                 ),
+//                 NavigationRailDestination(
+//                     icon: Icon(Icons.favorite),
+//                     label: const Text('Favorites')
+//                 )
+//               ],
+//               selectedIndex: 1,
+//               onDestinationSelected: (value) {
+//                 print('Selected: $value');
+//               },
+//             )
+//           ),
+//           Expanded(
+//               child: Container(
+//                 color: Theme.of(context).colorScheme.onPrimaryContainer,
+//                 child: GeneratorPage(),
+//               )
+//           )
+//         ],
+//       )
+//     );
+//   }
+// }
+
+class MyHomePage extends StatefulWidget {
+  @override
+  _MyHomePageState createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  var selectedIndex = 0;
   @override
   Widget build(BuildContext context) {
+    Widget page;
+    switch (selectedIndex) {
+      case 0:
+        page = GeneratorPage();
+        break;
+      case 1:
+        page = FavoritesPage();
+        break;
+      default:
+        throw UnimplementedError('No widget for $selectedIndex');
+    }
+
     return Scaffold(
       body: Row(
         children: [
           SafeArea(
-            child: NavigationRail(
-              extended: false,
-              destinations: [
-                NavigationRailDestination(
-                    icon: Icon(Icons.home),
-                    label: const Text('Home')
-                ),
-                NavigationRailDestination(
-                    icon: Icon(Icons.favorite),
-                    label: const Text('Favorites')
-                )
-              ],
-              selectedIndex: 0,
-              onDestinationSelected: (value) {
-                print('Selected: $value');
-              },
-            )
+              child: NavigationRail(
+                extended: false,
+                destinations: [
+                  NavigationRailDestination(
+                      icon: Icon(Icons.home),
+                      label: const Text('Home')
+                  ),
+
+                  NavigationRailDestination(
+                      icon: Icon(Icons.favorite),
+                      label: const Text('Like')
+                  )
+                ],
+                selectedIndex: selectedIndex,
+                onDestinationSelected: (value) {
+                  setState(() {
+                    selectedIndex = value;
+                  });
+                },
+              )
           ),
           Expanded(
               child: Container(
                 color: Theme.of(context).colorScheme.onPrimaryContainer,
-                child: GeneratePage(),
+                child: page,
               )
           )
         ],
-      )
+      ),
     );
   }
 }
 
-class GeneratePage extends StatelessWidget {
+class GeneratorPage extends StatelessWidget {
+  const GeneratorPage({super.key});
   @override
   Widget build(BuildContext context){
     var appState = context.watch<MyAppState>();
@@ -102,7 +167,7 @@ class GeneratePage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           BigCard(pair: pair),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -117,12 +182,40 @@ class GeneratePage extends StatelessWidget {
                   onPressed: () {
                     appState.getNext();
                   },
-                  child: Text('Next'),
+                  child: const Text('Next'),
               )
             ],
           )
         ],
       ),
+    );
+  }
+}
+
+class FavoritesPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+
+    if (appState.favorites.isEmpty){
+      return Center(
+        child: const Text('No favorites yet'),
+      );
+    }
+
+    return ListView(
+      children: [
+        Padding(
+            padding: const EdgeInsets.all(20),
+            child: Text('You have ${appState.favorites.length} favorites'),
+        ),
+        for(var pair in appState.favorites)
+          ListTile(
+            leading: Icon(Icons.favorite),
+            textColor: Theme.of(context).colorScheme.primary,
+            title: Text(pair.asLowerCase),
+          ),
+      ],
     );
   }
 }
